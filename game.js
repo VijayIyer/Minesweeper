@@ -56,7 +56,7 @@ class Tile {
                     == State.Mine)][1];
             }
             else {
-                src = imageMapping[imageMapping.findIndex(mapping => mapping[0] == State.Zero)][1];
+                src = imageMapping[imageMapping.findIndex(mapping => mapping[0] == this.State)][1];
             }
         }
         console.log(this.State);
@@ -84,8 +84,23 @@ class TileSet {
             if ((mousePos.x < tile.x + tile.width) && (mousePos.x > tile.x)
                 && (mousePos.y < tile.y + tile.height) && (mousePos.y > tile.y)) {
                 tile.isClicked = true;
+                tile.State = this.getNumMines(tile);
             }
         });
+    }
+    getNumMines(tile) {
+        const numMines = Math.floor(Math.random() * 8);
+        switch (numMines) {
+            case 1: return State.One;
+            case 2: return State.Two;
+            case 3: return State.Three;
+            case 4: return State.Four;
+            case 5: return State.Five;
+            case 6: return State.Six;
+            case 7: return State.Seven;
+            case 8: return State.Eight;
+            default: return State.Zero;
+        }
     }
 }
 class MousePos {
