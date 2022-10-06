@@ -2,19 +2,21 @@
 var State;
 (function (State) {
     State[State["Clicked"] = 0] = "Clicked";
-    State[State["One"] = 1] = "One";
-    State[State["Two"] = 2] = "Two";
-    State[State["Three"] = 3] = "Three";
-    State[State["Four"] = 4] = "Four";
-    State[State["Five"] = 5] = "Five";
-    State[State["Six"] = 6] = "Six";
-    State[State["Seven"] = 7] = "Seven";
-    State[State["Eight"] = 8] = "Eight";
-    State[State["Mine"] = 9] = "Mine";
-    State[State["Not Clicked"] = 10] = "Not Clicked";
+    State[State["Zero"] = 1] = "Zero";
+    State[State["One"] = 2] = "One";
+    State[State["Two"] = 3] = "Two";
+    State[State["Three"] = 4] = "Three";
+    State[State["Four"] = 5] = "Four";
+    State[State["Five"] = 6] = "Five";
+    State[State["Six"] = 7] = "Six";
+    State[State["Seven"] = 8] = "Seven";
+    State[State["Eight"] = 9] = "Eight";
+    State[State["Mine"] = 10] = "Mine";
+    State[State["Not Clicked"] = 11] = "Not Clicked";
 })(State || (State = {}));
 const imageMapping = [
-    [State.Clicked, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_mine_hit.png'],
+    [State.Mine, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_mine_hit.png'],
+    [State.Zero, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_0.png'],
     [State.One, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_1.png'],
     [State.Two, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_2.png'],
     [State.Three, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_3.png'],
@@ -26,14 +28,16 @@ const imageMapping = [
     [State["Not Clicked"], 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_unexplored.png']
 ];
 class Tile {
-    constructor(x, y, width, height, state) {
+    constructor(x, y, width, height, hasMine, state) {
         this.height = 0;
         this.width = 0;
+        this.isClicked = false;
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
         this.State = state;
+        this.hasMine = hasMine;
     }
     draw(canvas) {
         const ctx = canvas.getContext('2d');
@@ -42,11 +46,18 @@ class Tile {
             ctx.drawImage(img, this.x, this.y, this.width, this.height);
         });
         let src;
-        if (imageMapping.findIndex(mapping => mapping[0] == this.State) != -1) {
-            src = imageMapping[imageMapping.findIndex(mapping => mapping[0] == this.State)][1];
+        if (this.isClicked != true) {
+            src = imageMapping[imageMapping.findIndex(mapping => mapping[0] == State["Not Clicked"])][1];
         }
         else {
-            src = imageMapping[imageMapping.findIndex(mapping => mapping[0] == State["Not Clicked"])][1];
+            console.log('tile has mine');
+            if (this.hasMine) {
+                src = imageMapping[imageMapping.findIndex(mapping => mapping[0]
+                    == State.Mine)][1];
+            }
+            else {
+                src = imageMapping[imageMapping.findIndex(mapping => mapping[0] == State.Zero)][1];
+            }
         }
         console.log(this.State);
         img.src = src;
@@ -60,7 +71,7 @@ class TileSet {
         const tileWidth = canvas.width / numCols;
         for (let i = 0; i < numRows; i++) {
             for (let j = 0; j < numCols; j++) {
-                let tile = new Tile(i * tileWidth, j * tileHeight, tileWidth, tileHeight, State["Not Clicked"]);
+                let tile = new Tile(i * tileWidth, j * tileHeight, tileWidth, tileHeight, [true, false][Math.floor(Math.random() * 2)], State["Not Clicked"]);
                 this.tiles.push(tile);
             }
         }
@@ -72,7 +83,7 @@ class TileSet {
         this.tiles.forEach(tile => {
             if ((mousePos.x < tile.x + tile.width) && (mousePos.x > tile.x)
                 && (mousePos.y < tile.y + tile.height) && (mousePos.y > tile.y)) {
-                tile.State = State.Clicked;
+                tile.isClicked = true;
             }
         });
     }
@@ -83,8 +94,6 @@ class MousePos {
         this.y = 0;
     }
 }
-const tileSrc = "minesweeper_tiles/Minesweeper_LAZARUS_21x21_0.png";
-const tileClickedSrc = "minesweeper_tiles/Minesweeper_LAZARUS_21x21_mine_hit.png";
 const numRows = 8;
 const numCols = 8;
 window.addEventListener('load', () => {

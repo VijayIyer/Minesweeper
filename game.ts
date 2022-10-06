@@ -1,6 +1,7 @@
 
 enum State {
-	'Clicked', 
+	'Clicked',
+	'Zero', 
 	'One',
 	'Two',
 	'Three',
@@ -14,7 +15,8 @@ enum State {
 	}
 const imageMapping : Array<[State, string]>= 
 [
-	[State.Clicked, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_mine_hit.png'],
+	[State.Mine, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_mine_hit.png'],
+	[State.Zero, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_0.png'],
 	[State.One, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_1.png'],
 	[State.Two, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_2.png'],
 	[State.Three, 'minesweeper_tiles/Minesweeper_LAZARUS_21x21_3.png'],
@@ -30,13 +32,16 @@ class Tile {
 	y:number;
 	height:number = 0;
 	width:number = 0;
+	hasMine:boolean;
+	isClicked = false;
 	State:State;
-	constructor(x:number, y:number, width:number, height:number, state:State){
+	constructor(x:number, y:number, width:number, height:number, hasMine:boolean, state:State){
 		this.x = x;
 		this.y = y;
 		this.width = width;
 		this.height = height;
 		this.State = state;
+		this.hasMine = hasMine; 
 	}
 	draw(canvas:HTMLCanvasElement){
 		const ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -50,14 +55,20 @@ class Tile {
 				this.height);
 		});
 		let src:string;
-		if(imageMapping.findIndex(mapping=>mapping[0] == this.State) != -1){
-			src = imageMapping[imageMapping.findIndex(mapping=>mapping[0] == this.State)][1];
-		} 
-		else{
+		if(this.isClicked != true){
 			src = imageMapping[imageMapping.findIndex(mapping=>mapping[0] == State["Not Clicked"])][1];
 		}
+		else{
+			console.log('tile has mine');
+			if(this.hasMine){
+				src = imageMapping[imageMapping.findIndex(mapping=>mapping[0]
+					== State.Mine)][1];
+			}
+			else{
+				src = imageMapping[imageMapping.findIndex(mapping=>mapping[0] == State.Zero)][1];	
+			}
+		}
 		console.log(this.State);
-		
 		img.src = src;
 	}
 }
@@ -71,8 +82,9 @@ class TileSet{
 	    	for(let j = 0; j < numCols; j++){
 				let tile = new Tile(i*tileWidth, j*tileHeight,
 					 tileWidth,
-					 tileHeight
-					, State["Not Clicked"]);
+					 tileHeight,
+					[true, false][Math.floor(Math.random()*2)],
+					State["Not Clicked"]);
 				this.tiles.push(tile);
 			}
 		}
@@ -85,7 +97,7 @@ class TileSet{
 		this.tiles.forEach(tile=>{
 			if( (mousePos.x < tile.x + tile.width) && (mousePos.x > tile.x)
 			&& (mousePos.y < tile.y + tile.height) && (mousePos.y > tile.y)){
-				tile.State = State.Clicked;
+				tile.isClicked = true;
 			}
 		});
 	}
@@ -94,12 +106,8 @@ class MousePos{
 	x:number = 0;
 	y:number = 0;
 }
-
-const tileSrc = "minesweeper_tiles/Minesweeper_LAZARUS_21x21_0.png";
-const tileClickedSrc = "minesweeper_tiles/Minesweeper_LAZARUS_21x21_mine_hit.png";
 const numRows = 8;
 const numCols = 8;
-
 window.addEventListener('load', ()=>{
 	const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 	const tileSet:TileSet = new TileSet(numRows, numCols, canvas);
