@@ -73,7 +73,7 @@ class Tile {
 	}
 }
 class TileSet{
-	tiles:Tile[] = [];
+	tiles:Array<[number, number, Tile]> = [];
 	constructor(numRows:number, numCols:number, canvas:HTMLCanvasElement){
 		console.log(canvas);
 		const tileHeight = canvas.height / numRows;
@@ -85,27 +85,68 @@ class TileSet{
 					 tileHeight,
 					[true, false][Math.floor(Math.random()*2)],
 					State["Not Clicked"]);
-				this.tiles.push(tile);
+				this.tiles.push([i, j, tile]);
 			}
 		}
 	}
 	draw(canvas:HTMLCanvasElement){
-		this.tiles.forEach(tile=>tile.draw(canvas));
+		this.tiles.forEach(tile=>tile[2].draw(canvas));
 	}
 	clicked(mousePos:MousePos):void{
 		
-		this.tiles.forEach(tile=>{
+		this.tiles.forEach(tileChild=>{
+			const tile:Tile = tileChild[2];
 			if( (mousePos.x < tile.x + tile.width) && (mousePos.x > tile.x)
 			&& (mousePos.y < tile.y + tile.height) && (mousePos.y > tile.y)){
 				
 				tile.isClicked = true;
-				tile.State = this.getNumMines(tile);
+				tile.State = this.getNumMines(tileChild);
 			}
 		});
 	}
-	getNumMines(tile:Tile):State{
-		const numMines = Math.floor(Math.random()*8);
-		switch(numMines){
+	getNumMines(currentTile:[number, number, Tile]):State{
+		let neighborMines:number = 0;
+		const topLeft = this.tiles.find(tile=>tile[0] == (currentTile[0] - 1) && tile[1] == currentTile[1]-1);
+		if(topLeft != undefined){
+			const tile = topLeft[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const top = this.tiles.find(tile=>tile[0] == (currentTile[0] - 1) && tile[1] == currentTile[1]);
+		if(top != undefined){
+			const tile = top[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const topRight = this.tiles.find(tile=>tile[0] == (currentTile[0] - 1) && tile[1] == currentTile[1]+1);
+		if(topRight != undefined){
+			const tile = topRight[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const left = this.tiles.find(tile=>tile[0] == currentTile[0] && tile[1] == currentTile[1]-1);
+		if(left != undefined){
+			const tile = left[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const right = this.tiles.find(tile=>tile[0] == currentTile[0] && tile[1] == currentTile[1]+1);
+		if(right != undefined){
+			const tile = right[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const downLeft = this.tiles.find(tile=>tile[0] == (currentTile[0] + 1) && tile[1] == currentTile[1]-1);
+		if(downLeft != undefined){
+			const tile = downLeft[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const down = this.tiles.find(tile=>tile[0] == (currentTile[0] + 1) && tile[1] == currentTile[1]);
+		if(down != undefined){
+			const tile = down[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		const downRight = this.tiles.find(tile=>tile[0] == (currentTile[0] + 1) && tile[1] == currentTile[1] + 1);
+		if(downRight != undefined){
+			const tile = downRight[2];
+			if(tile.hasMine){neighborMines += 1}
+		}
+		switch(neighborMines){
 			case 1:return State.One;
 			case 2:return State.Two;
 			case 3:return State.Three;
