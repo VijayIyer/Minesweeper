@@ -100,51 +100,39 @@ class TileSet{
 			&& (mousePos.y < tile.y + tile.height) && (mousePos.y > tile.y)){
 				
 				tile.isClicked = true;
-				tile.State = this.getNumMines(tileChild);
+				tile.State = this.getNumNeighboringMines(tileChild);
 			}
 		});
 	}
-	getNumMines(currentTile:[number, number, Tile]):State{
+	getNumNeighboringMines(currentTile:[number, number, Tile]):State{
 		let neighborMines:number = 0;
-		const topLeft = this.tiles.find(tile=>tile[0] == (currentTile[0] - 1) && tile[1] == currentTile[1]-1);
-		if(topLeft != undefined){
-			const tile = topLeft[2];
-			if(tile.hasMine){neighborMines += 1}
+		
+		if(this.neighborHasMine(currentTile, -1, -1)){
+			neighborMines += 1;
 		}
-		const top = this.tiles.find(tile=>tile[0] == (currentTile[0] - 1) && tile[1] == currentTile[1]);
-		if(top != undefined){
-			const tile = top[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, -1, 0)){
+			neighborMines += 1;
 		}
-		const topRight = this.tiles.find(tile=>tile[0] == (currentTile[0] - 1) && tile[1] == currentTile[1]+1);
-		if(topRight != undefined){
-			const tile = topRight[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, -1, 1)){
+			neighborMines += 1;
 		}
-		const left = this.tiles.find(tile=>tile[0] == currentTile[0] && tile[1] == currentTile[1]-1);
-		if(left != undefined){
-			const tile = left[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, 0, -1)){
+			neighborMines += 1;
 		}
-		const right = this.tiles.find(tile=>tile[0] == currentTile[0] && tile[1] == currentTile[1]+1);
-		if(right != undefined){
-			const tile = right[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, 0, 0)){
+			neighborMines += 1;
 		}
-		const downLeft = this.tiles.find(tile=>tile[0] == (currentTile[0] + 1) && tile[1] == currentTile[1]-1);
-		if(downLeft != undefined){
-			const tile = downLeft[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, 0, 1)){
+			neighborMines += 1;
 		}
-		const down = this.tiles.find(tile=>tile[0] == (currentTile[0] + 1) && tile[1] == currentTile[1]);
-		if(down != undefined){
-			const tile = down[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, -1, 1)){
+			neighborMines += 1;
 		}
-		const downRight = this.tiles.find(tile=>tile[0] == (currentTile[0] + 1) && tile[1] == currentTile[1] + 1);
-		if(downRight != undefined){
-			const tile = downRight[2];
-			if(tile.hasMine){neighborMines += 1}
+		if(this.neighborHasMine(currentTile, -1, 0)){
+			neighborMines += 1;
+		}
+		if(this.neighborHasMine(currentTile, -1, 1)){
+			neighborMines += 1;
 		}
 		switch(neighborMines){
 			case 1:return State.One;
@@ -158,11 +146,35 @@ class TileSet{
 			default: return State.Zero;
 		}
 	}
+	neighborHasMine(currentTile:[number, number, Tile], neighborRow:number,
+		 neighBorCol:number):boolean{
+		const neighboringTile = this.tiles.find(tile=>tile[0] == currentTile[0]+neighborRow 
+			&& tile[1] == currentTile[1]+neighBorCol);
+			if(neighboringTile != undefined){
+				if(neighboringTile[2].hasMine){
+					return true;
+				}
+				else{
+					return false;
+				}
+			}
+		return false;
+	}
 }
 class MousePos{
 	x:number = 0;
 	y:number = 0;
 }
+class ClickTileCommand{
+	constructor(private tileSet:TileSet, private mousePos:MousePos){
+
+	}
+	execute():void{
+		this.tileSet.clicked(this.mousePos);
+	}
+	undo():void{}
+}
+
 const numRows = 8;
 const numCols = 8;
 window.addEventListener('load', ()=>{
@@ -189,6 +201,7 @@ function canvasClicked(e:MouseEvent, tileSet:TileSet){
     const mousePos = new MousePos();
 	mousePos.x = e.clientX - rect.x;
     mousePos.y = e.clientY - rect.y;
-    tileSet.clicked(mousePos);
+	const clickTileCommand = new ClickTileCommand(tileSet, mousePos);
+    clickTileCommand.execute();
 	drawTiles(tileSet);
 }

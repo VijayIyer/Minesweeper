@@ -1,0 +1,22 @@
+.center {
+    margin: auto;
+    width: 50%;
+    border: 3px solid green;
+    padding: 10px;
+  }
+canvas:hover{
+    cursor:pointer
+}
+button {
+    border: 1px outset blue;
+    background-color: lightBlue;
+    height:50px;
+    width:50px;
+    cursor:pointer;
+ }
+ 
+button:hover {
+    background-color: blue;
+    color:white;
+ }
+ 
