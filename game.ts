@@ -1,4 +1,52 @@
-
+interface Command{
+	execute():void;
+	undo():void;
+}
+class ClickTileCommand implements Command{
+	tiles:[number, number, Tile][];
+	constructor(private tileSet:TileSet, private mousePos:MousePos){
+		this.tiles =  [...this.tileSet.tiles];
+	}
+	execute():void{
+		console.log(this.mousePos);
+		this.tileSet.clicked(this.mousePos);
+	}
+	undo():void{
+		console.log(this.mousePos);
+		this.tileSet.unclicked(this.mousePos);
+	}
+}
+class CommandList implements Command{
+	commands:ClickTileCommand[] =[];
+	currentIndx:number = 0;
+	add(command:ClickTileCommand):void{
+		this.commands.push(command);
+	}
+	remove(command:ClickTileCommand):void{
+		const indx:number = this.commands.findIndex(findCommand=>findCommand == command);
+		if(indx != -1){
+			this.commands.splice(indx, 1);
+		}
+	}
+	execute():void{
+		
+		
+			let command = this.commands[this.currentIndx];
+			command.execute();
+			this.currentIndx += 1;
+		
+		
+	}
+	undo():void{
+		
+		if(this.currentIndx > 0 && this.commands.length > 0){
+			this.currentIndx -= 1;
+			let command = this.commands[this.currentIndx];
+			command.undo();
+		}
+		
+	}
+}
 enum State {
 	'Clicked',
 	'Zero', 
@@ -59,7 +107,7 @@ class Tile {
 			src = imageMapping[imageMapping.findIndex(mapping=>mapping[0] == State["Not Clicked"])][1];
 		}
 		else{
-			console.log('tile has mine');
+			
 			if(this.hasMine){
 				src = imageMapping[imageMapping.findIndex(mapping=>mapping[0]
 					== State.Mine)][1];
@@ -68,14 +116,13 @@ class Tile {
 				src = imageMapping[imageMapping.findIndex(mapping=>mapping[0] == this.State)][1];	
 			}
 		}
-		console.log(this.State);
 		img.src = src;
 	}
 }
 class TileSet{
 	tiles:Array<[number, number, Tile]> = [];
 	constructor(numRows:number, numCols:number, canvas:HTMLCanvasElement){
-		console.log(canvas);
+		
 		const tileHeight = canvas.height / numRows;
 		const tileWidth = canvas.width / numCols;
 		for(let i = 0; i < numRows;i++){
@@ -104,6 +151,16 @@ class TileSet{
 			}
 		});
 	}
+	unclicked(mousePos:MousePos):void{
+		this.tiles.forEach(tileChild=>{
+			const tile:Tile = tileChild[2];
+			if( (mousePos.x < tile.x + tile.width) && (mousePos.x > tile.x)
+			&& (mousePos.y < tile.y + tile.height) && (mousePos.y > tile.y)){
+				
+				tile.isClicked = false;
+			}
+		});
+	}
 	getNumNeighboringMines(currentTile:[number, number, Tile]):State{
 		let neighborMines:number = 0;
 		
@@ -119,21 +176,19 @@ class TileSet{
 		if(this.neighborHasMine(currentTile, 0, -1)){
 			neighborMines += 1;
 		}
-		if(this.neighborHasMine(currentTile, 0, 0)){
-			neighborMines += 1;
-		}
 		if(this.neighborHasMine(currentTile, 0, 1)){
 			neighborMines += 1;
 		}
-		if(this.neighborHasMine(currentTile, -1, 1)){
+		if(this.neighborHasMine(currentTile, 1, -1)){
 			neighborMines += 1;
 		}
-		if(this.neighborHasMine(currentTile, -1, 0)){
+		if(this.neighborHasMine(currentTile, 1, 0)){
 			neighborMines += 1;
 		}
-		if(this.neighborHasMine(currentTile, -1, 1)){
+		if(this.neighborHasMine(currentTile, 1, 1)){
 			neighborMines += 1;
 		}
+		
 		switch(neighborMines){
 			case 1:return State.One;
 			case 2:return State.Two;
@@ -165,18 +220,11 @@ class MousePos{
 	x:number = 0;
 	y:number = 0;
 }
-class ClickTileCommand{
-	constructor(private tileSet:TileSet, private mousePos:MousePos){
 
-	}
-	execute():void{
-		this.tileSet.clicked(this.mousePos);
-	}
-	undo():void{}
-}
 
 const numRows = 8;
 const numCols = 8;
+const clickTileCommands:CommandList = new CommandList();
 window.addEventListener('load', ()=>{
 	const canvas = document.querySelector('canvas') as HTMLCanvasElement;
 	const tileSet:TileSet = new TileSet(numRows, numCols, canvas);
@@ -185,9 +233,17 @@ window.addEventListener('load', ()=>{
 	document.querySelector('canvas')?.addEventListener('click', (e)=>{
 		canvasClicked(e, tileSet);
 	});
-	
+	document.getElementById('undoBtn')?.addEventListener('click', (e)=>{
+		console.log('undo move');
+		clickTileCommands.undo();
+		drawTiles(tileSet);
+	});
+	document.getElementById('redoBtn')?.addEventListener('click', (e)=>{
+		console.log('redo move');
+		clickTileCommands.execute();
+		drawTiles(tileSet);
+	});
 });
-
 
 function drawTiles(tileSet:TileSet){
 	const canvas  = document.querySelector('canvas') as HTMLCanvasElement;
@@ -202,6 +258,7 @@ function canvasClicked(e:MouseEvent, tileSet:TileSet){
 	mousePos.x = e.clientX - rect.x;
     mousePos.y = e.clientY - rect.y;
 	const clickTileCommand = new ClickTileCommand(tileSet, mousePos);
-    clickTileCommand.execute();
+	clickTileCommands.add(clickTileCommand);
+	clickTileCommands.execute();
 	drawTiles(tileSet);
 }
